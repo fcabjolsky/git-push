@@ -4,7 +4,7 @@ This plugin is an extension to [vim-fugitive](https://github.com/tpope/vim-fugit
 Creates a [nui.vim](https://github.com/MunifTanjim/nui.nvim) menu with the all the branches, where you can select the branch to push
 
 
-#### Usage
+### Usage
 
 ```lua
 local git_push = require('git-push')
