@@ -1,32 +1,62 @@
 local M = {}
+GitPushConfig = GitPushConfig or {}
+
+--[[ 
+-- usage
+-- require("git-push").show_push_dialog()
+-- this will display the dialog with the branches
+]]
+
 
 local function is_git_repo()
     local git_dir = vim.fn.finddir('.git', vim.fn.getcwd() .. ";")
     return git_dir ~= ""
 end
 
-function M.gitPushMeBabe(with_origin, with_menu)
+local function get_git_branches()
     local out = vim.fn.system "git branch | tr -d '\n'"
-    print(out)
-    if (not is_git_repo()) then
-        print("This is not a git repository")
-        return
-    end
-    local menu_items = {}
-
+    local branches = {}
     for substring in out:gmatch("%S+") do
-        if (substring ~= nil or substring ~= '') then
+        if (substring ~= nil or substring ~= '') and (substring ~= '*') then
             substring = string.gsub(substring, "*", "")
-            if (with_menu) then
-                table.insert(menu_items, require("nui.menu").item(substring))
-            else
-                table.insert(menu_items, substring)
-            end
+            table.insert(branches, substring)
         end
     end
+    return branches
+end
 
-    if (with_menu) then
+function M.setup(config)
+    if not config then
+        config = {}
+    end
+    if not vim.g.loaded_fugitive then
+        error("Fugitive is needed for this plugin")
+        return
+    end
+    GitPushConfig.is_git_repo = is_git_repo()
+    GitPushConfig.with_menu = config.use_nui or true
+    GitPushConfig.remote = config.use_nui or 'origin'
+end
+
+function M.push_to_branch(branch)
+    local cmd = "push " .. GitPushConfig.remote .. " "
+    vim.cmd.Git({ args = { cmd .. branch } })
+end
+
+function M.show_push_dialog()
+    if not GitPushConfig.is_git_repo then
+        error("This is not a git repository")
+        return
+    end
+
+    local branches = get_git_branches()
+
+    if (GitPushConfig.with_menu) then
         local Menu = require("nui.menu")
+        local menu_items = {}
+        for _, branch in ipairs(branches) do
+            table.insert(menu_items, Menu.item(branch))
+        end
 
         local menu = Menu({
             position = "50%",
@@ -35,10 +65,12 @@ function M.gitPushMeBabe(with_origin, with_menu)
                 height = 5,
             },
             border = {
-                style = "single",
+                style = "rounded",
+                padding = { 1 },
                 text = {
                     top = "Choose branch to push",
                     top_align = "center",
+                    bottom = "Space or Enter to push",
                 },
             },
             win_options = {
@@ -54,15 +86,13 @@ function M.gitPushMeBabe(with_origin, with_menu)
                 submit = { "<CR>", "<Space>" },
             },
             on_submit = function(item)
-                local cmd = "push "
-                if (with_origin) then
-                    cmd = cmd .. "origin "
-                end
-                vim.cmd.Git({ args = { cmd .. item.text } })
+                M.push_to_branch(item.text)
             end,
         })
         menu:mount()
     end
 end
+
+M.setup()
 
 return M
