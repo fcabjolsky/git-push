@@ -15,11 +15,16 @@ end
 
 local function get_git_branches()
     local out = vim.fn.system "git branch | tr -d '\n'"
+    local current_branch = vim.fn.system "git rev-parse --abbrev-ref HEAD | tr -d '\n'"
     local branches = {}
     for substring in out:gmatch("%S+") do
         if (substring ~= nil or substring ~= '') and (substring ~= '*') then
             substring = string.gsub(substring, "*", "")
-            table.insert(branches, substring)
+            if substring == current_branch then
+                table.insert(branches, 1, substring)
+            else
+                table.insert(branches, substring)
+            end
         end
     end
     return branches
@@ -50,7 +55,6 @@ function M.show_push_dialog()
     end
 
     local branches = get_git_branches()
-
     if (GitPushConfig.with_menu) then
         local Menu = require("nui.menu")
         local menu_items = {}
