@@ -10,12 +10,15 @@ Creates a [nui.vim](https://github.com/MunifTanjim/nui.nvim) menu with the all t
 local git_push = require('git-push')
 -- optional
 git_push.setup({
-  remote: 'origin'
+  remote = 'origin',
+  use_nui = false
 })
 
 -- display the dialog
 git_push.show_push_dialog()
 ```
+
+`use_nui` default: `true` if set to `false` it will use the native `vim.ui.input` to get the selection
 
 using a remap
 
@@ -24,3 +27,4 @@ vim.keymap.set("n", "<leader>gp", function()
     require("git-push").show_push_dialog()
 end, {desc = "[G]it [P]ush"})
 ```
+
