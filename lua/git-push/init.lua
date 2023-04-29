@@ -102,7 +102,7 @@ function M.setup(config)
     end
     GitPushConfig.is_git_repo = is_git_repo()
     local use_nui = true
-    if not config.use_nui then
+    if config.use_nui ~= nil then
         use_nui = config.use_nui
     end
     GitPushConfig.with_menu = use_nui
