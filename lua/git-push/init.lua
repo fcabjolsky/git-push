@@ -1,7 +1,7 @@
 local M = {}
 GitPushConfig = GitPushConfig or {}
 
---[[ 
+--[[
 -- usage
 -- Using nui:
 -- require("git-push").show_push_dialog()
@@ -14,17 +14,16 @@ GitPushConfig = GitPushConfig or {}
 
 
 local function is_git_repo()
-    local git_dir = vim.fn.finddir('.git', vim.fn.getcwd() .. ";")
-    return git_dir ~= ""
+    local git_dir = vim.fn.system('git rev-parse --is-inside-work-tree')
+    return string.find(git_dir, "true") ~= nil
 end
 
 local function get_git_branches()
-    local out = vim.fn.system "git branch | tr -d '\n'"
+    local out = vim.fn.system "git branch --list | cut -c 3- | sed -e 's/^\\*//' | tr -s '\n' ','"
     local current_branch = vim.fn.system "git rev-parse --abbrev-ref HEAD | tr -d '\n'"
     local branches = {}
-    for substring in out:gmatch("%S+") do
-        if (substring ~= nil or substring ~= '') and (substring ~= '*') then
-            substring = string.gsub(substring, "*", "")
+    for substring in out:gmatch("([^,]+)") do
+        if (substring ~= nil or substring ~= '') then
             if substring == current_branch then
                 table.insert(branches, 1, substring)
             else
@@ -133,4 +132,3 @@ M.setup()
 
 
 return M
-
