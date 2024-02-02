@@ -34,7 +34,7 @@ local function get_git_branches()
     return branches
 end
 
-local function show_with_nui(branches)
+local function show_with_nui(branches, action, submit)
     local Menu = require("nui.menu")
     local menu_items = {}
     for _, branch in ipairs(branches) do
@@ -51,9 +51,9 @@ local function show_with_nui(branches)
             style = "rounded",
             padding = { 1 },
             text = {
-                top = "Choose branch to push",
+                top = "Choose branch to " .. action,
                 top_align = "center",
-                bottom = "Space or Enter to push",
+                bottom = "Space or Enter to " .. action,
             },
         },
         win_options = {
@@ -69,13 +69,13 @@ local function show_with_nui(branches)
             submit = { "<CR>", "<Space>" },
         },
         on_submit = function(item)
-            M.push_to_branch(item.text)
+          submit(item.text)
         end,
     })
     menu:mount()
 end
 
-local function show_with_native_input(branches)
+local function show_with_native_input(branches, submit)
     local prompt = ''
     for i, branch in pairs(branches) do
         prompt = prompt .. branch .. ' (' .. i .. ')\n'
@@ -88,6 +88,7 @@ local function show_with_native_input(branches)
     if selected == nil then
         return
     end
+    submit(selected)
     M.push_to_branch(selected)
 end
 
@@ -113,6 +114,12 @@ function M.push_to_branch(branch)
     vim.cmd.Git({ args = { cmd .. branch } })
 end
 
+function M.pull_from_branch(branch)
+    local cmd = "pull " .. GitPushConfig.remote .. " "
+    vim.cmd.Git({ args = { cmd .. branch } })
+end
+
+
 function M.show_push_dialog()
     if not GitPushConfig.is_git_repo then
         error("This is not a git repository")
@@ -122,9 +129,24 @@ function M.show_push_dialog()
     local branches = get_git_branches()
 
     if (GitPushConfig.with_menu) then
-        show_with_nui(branches)
+        show_with_nui(branches, "push", M.push_to_branch)
     else
-        show_with_native_input(branches)
+        show_with_native_input(branches, M.push_to_branch)
+    end
+end
+
+function M.show_pull_dialog()
+    if not GitPushConfig.is_git_repo then
+        error("This is not a git repository")
+        return
+    end
+
+    local branches = get_git_branches()
+
+    if (GitPushConfig.with_menu) then
+        show_with_nui(branches, "pull", M.pull_from_branch)
+    else
+        show_with_native_input(branches, M.pull_from_branch)
     end
 end
 
